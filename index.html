@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Michi-run con Audio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        * { padding: 0; margin: 0; box-sizing: border-box; }
+
+        body {
+            height: 100vh;
+            background: #584040;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
+            image-rendering: pixelated;
+            touch-action: none; 
+        }
+
+        .contenedor {
+            width: 920px;
+            height: 280px;
+            margin: 0 auto;
+            position: relative;
+            background: #69e2ff;
+            overflow: hidden;
+            transition: background 2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .michi {
+            width: 84px;
+            height: 84px;
+            position: absolute;
+            bottom: 80px;
+            left: 42px;
+            z-index: 100;
+            background-image: url("michi-gris.png");
+            background-size: auto 100%;
+            background-repeat: no-repeat;
+            background-position: 0px 0px;
+            filter: drop-shadow(0px 0px 1px rgba(255,255,255,0.5));
+        }
+
+        .michi-menu {
+            width: 84px;
+            height: 84px;
+            position: absolute;
+            bottom: 80px;
+            left: -100px;
+            z-index: 50;
+            background-size: auto 100%;
+            background-repeat: no-repeat;
+            animation: caminarMenu 8s linear infinite, animarMichi 0.25s steps(1) infinite;
+        }
+
+        @keyframes caminarMenu {
+            0% { left: -100px; transform: scaleX(1); }
+            45% { transform: scaleX(1); }
+            50% { left: 950px; transform: scaleX(-1); }
+            95% { transform: scaleX(-1); }
+            100% { left: -100px; transform: scaleX(1); }
+        }
+
+        .michi-corriendo {
+            animation: animarMichi 0.25s steps(1) infinite;
+        }
+
+        .michi-estrellado {
+            background-position: -168px 0px !important;
+            animation: none;
+        }
+
+        @keyframes animarMichi {
+            from { background-position-x: 0px; }
+            to { background-position-x: -168px; }
+        }
+
+        .suelo {
+            z-index: 10;
+            width: 200%;
+            height: 80px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background: url(suelo.png) repeat-x;
+            background-size: auto 100%;
+        }
+
+        .score {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 100;
+            color: #841d00;
+            font-size: 20px;
+            transition: color 1s ease;
+        }
+
+        .piedrita {
+            width: 46px;
+            height: 60px;
+            position: absolute;
+            bottom: 70px;
+            z-index: 20;
+            background: url("piedrita.png") no-repeat center;
+            background-size: contain;
+        }
+
+        .vistas-menu {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: inherit;
+            z-index: 300;
+            padding: 20px;
+        }
+
+        .vistas-menu h1, .vistas-menu h2 { z-index: 310; }
+
+        .vistas-menu h1 { font-size: 28px; margin-bottom: 20px; color: #494058; }
+        .vistas-menu h2 { font-size: 18px; margin-bottom: 15px; }
+
+        button {
+            position: relative;
+            z-index: 310;
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #d0aae8;
+            border: 4px solid #524058;
+            font-family: 'Press Start 2P', cursive;
+            transition: 0.1s;
+        }
+
+        button:hover { background: #aa7ebc; transform: scale(1.05); }
+
+        .opciones-skins { display: flex; gap: 15px; margin-bottom: 20px; z-index: 310; }
+        .skin-item {
+            width: 60px; height: 60px; cursor: pointer;
+            border: 3px solid transparent;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 5px;
+        }
+        .skin-seleccionada { border-color: #584040; background: #aa7ebc; }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 400;
+            background: rgba(195, 243, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .game-over p { color: #ff4d4d; font-size: 30px; margin-bottom: 20px; text-shadow: 2px 2px 0#000; }
+
+        .nubes-contenedor {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .nube {
+            position: absolute;
+            background: url("nube.png") no-repeat;
+            background-size: contain;
+            width: 100px;
+            height: 60px;
+            animation: moverNubes linear forwards;
+        }
+
+        @keyframes moverNubes {
+            from { left: 100%; }
+            to { left: -120px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="contenedor" id="main-cont">
+    <div id="menu-inicio" class="vistas-menu">
+        <div class="nubes-contenedor"></div>
+        <div class="suelo" id="suelo-menu"></div> <div id="michi-decorativo" class="michi-menu"></div>
+        
+        <h1>MICHI RUN</h1>
+        <button onclick="ClickBoton(); PrepararJuego()">START</button>
+        <button onclick="ClickBoton(); VerSeccion('mejores-scores')">SCORES</button>
+        <button onclick="ClickBoton(); VerSeccion('selector-skins')">COSTUME</button>
+    </div>
+
+    <div id="mejores-scores" class="vistas-menu" style="display:none;">
+        <div class="suelo"></div> <h2>TOP SCORES</h2>
+        <div id="lista-scores" style="margin-bottom: 20px; line-height: 2; z-index: 310;">---</div>
+        <button onclick="ClickBoton(); VerSeccion('menu-inicio')">BACK</button>
+    </div>
+
+    <div id="selector-skins" class="vistas-menu" style="display:none;">
+        <div class="suelo"></div> <h2>CHOOSE SKIN</h2>
+        <div class="opciones-skins">
+            <img src="michi-gris.png" id="skin1" onclick="ClickBoton(); ElegirSkin('michi-gris.png', 'skin1')" class="skin-item skin-seleccionada">
+            <img src="michi-naranja.png" id="skin2" onclick="ClickBoton(); ElegirSkin('michi-naranja.png', 'skin2')" class="skin-item">
+            <img src="michi-negro.png" id="skin3" onclick="ClickBoton(); ElegirSkin('michi-negro.png', 'skin3')" class="skin-item">
+            <img src="michi-marroncito.png" id="skin5" onclick="ClickBoton(); ElegirSkin('michi-marroncito.png', 'skin5')" class="skin-item">
+        </div>
+        <button onclick="ClickBoton(); VerSeccion('menu-inicio')">BACK</button>
+    </div>
+
+    <div id="juego" style="display:none; width: 100%; height: 100%;">
+        <div class="nubes-contenedor"></div>
+        <div class="suelo" id="suelo-juego"></div>
+        <div class="michi"></div>
+        <div class="score">0</div>
+        <div class="game-over" style="display:none;">
+            <p>GAME OVER</p>
+            <button onclick="ClickBoton(); ReiniciarJuego()">RESTART</button>
+            <button onclick="ClickBoton(); IrAlMenu()">MENU</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var sndMusica = new Audio("musica-fondo.mp3"); sndMusica.loop = true;
+var sndSalto = new Audio("salto.mp3");
+var sndChoque = new Audio("choque.mp3");
+var sndGameOver = new Audio("gameover.mp3");
+var sndClick = new Audio("click.mp3");
+
+function ClickBoton() { 
+    sndClick.currentTime = 0; 
+    sndClick.play().catch(e => console.log("Audio bloqueado")); 
+}
+
+var time = new Date();
+var deltaTime = 0;
+var sueloY = 80;
+var velY = 0;
+var impulso = 900;
+var gravedad = 2500;
+var michiPosX = 42;
+var michiPosY = sueloY;
+var sueloX = 0;
+var velEscenario = 1280/3;
+var gameVel = 1;
+var score = 0;
+var parado = true;
+var saltando = false;
+var tiempoHastaObstaculo = 2;
+var tiempoObstaculoMin = 0.7;
+var tiempoObstaculoMax = 1.8;
+var obstaculos = [];
+
+var contenedor, michi, textoScore, sueloJuego, sueloMenu, gameOver, michiMenu, divJuego;
+var skinActual = "michi-gris.png";
+var mejoresScores = JSON.parse(localStorage.getItem("michiScores")) || [];
+
+if(document.readyState === "complete" || document.readyState === "interactive"){
+    setTimeout(Init, 1);
+} else {
+    document.addEventListener("DOMContentLoaded", Init);
+}
+
+function Init(){
+    time = new Date();
+    Start();
+    Loop();
+    setInterval(GenerarNubeAutomatica, 2500);
+}
+
+function Start(){
+    gameOver = document.querySelector(".game-over");
+    sueloJuego = document.getElementById("suelo-juego");
+    sueloMenu = document.getElementById("suelo-menu");
+    contenedor = document.querySelector(".contenedor");
+    textoScore = document.querySelector(".score");
+    michi = document.querySelector(".michi");
+    michiMenu = document.getElementById("michi-decorativo");
+    divJuego = document.getElementById("juego");
+    michiMenu.style.backgroundImage = `url('${skinActual}')`;
+    
+    document.addEventListener("keydown", HandleKeyDown);
+
+    divJuego.addEventListener("mousedown", function(ev) {
+        if(ev.button === 0) Saltar();
+    });
+
+    divJuego.addEventListener("touchstart", function(ev) {
+        if(!parado) ev.preventDefault(); 
+        Saltar();
+    }, {passive: false});
+}
+
+function Loop(){
+    deltaTime = (new Date() - time) / 1000;
+    time = new Date();
+    
+    if(document.getElementById("menu-inicio").style.display !== "none") {
+        MoverSueloGenerico(sueloMenu);
+    }
+
+    if (!parado) Update();
+    requestAnimationFrame(Loop);
+}
+
+function Update(){
+    MoverSueloGenerico(sueloJuego);
+    MoverMichisito();
+    DCrearObstaculos();
+    MoverObstaculos();
+    DetectarColision();
+
+    if (saltando) {
+        velY -= gravedad * deltaTime;
+    }
+}
+
+function HandleKeyDown(ev){
+    if((ev.keyCode == 32 || ev.keyCode == 38 || ev.keyCode == 87) && !parado){
+        Saltar();
+    }
+}
+
+function Saltar(){
+    if (michiPosY === sueloY){
+        saltando = true;
+        velY = impulso;
+        michi.classList.remove("michi-corriendo");
+        // Audio salto
+        sndSalto.currentTime = 0;
+        sndSalto.play();
+    }
+}
+
+function MoverSueloGenerico(sueloElem){
+    sueloX += velEscenario * deltaTime * gameVel;
+    if(sueloElem) {
+        sueloElem.style.left = -(sueloX % contenedor.clientWidth) + "px";
+    }
+}
+
+function MoverMichisito(){
+    if (saltando) {
+        michiPosY += velY * deltaTime;
+    }
+    if (michiPosY <= sueloY){
+        michiPosY = sueloY;
+        velY = 0;
+        saltando = false;
+        if(!parado) michi.classList.add("michi-corriendo");
+    }
+    michi.style.bottom = Math.round(michiPosY) + "px";
+}
+
+function DCrearObstaculos(){
+    tiempoHastaObstaculo -= deltaTime;
+    if (tiempoHastaObstaculo < 0) CrearObstaculo();
+}
+
+function CrearObstaculo(){
+    var obstaculo = document.createElement("div");
+    contenedor.appendChild(obstaculo);
+    obstaculo.classList.add("piedrita");
+    obstaculo.posX = contenedor.clientWidth;
+    obstaculo.style.left = contenedor.clientWidth + "px";
+    obstaculos.push(obstaculo);
+    tiempoHastaObstaculo = tiempoObstaculoMin + Math.random()*(tiempoObstaculoMax-tiempoObstaculoMin)/gameVel;
+}
+
+function MoverObstaculos(){
+    for(var i = obstaculos.length - 1; i>=0; i--){
+        if (obstaculos[i].posX < -obstaculos[i].clientWidth){
+            obstaculos[i].parentNode.removeChild(obstaculos[i]);
+            obstaculos.splice(i, 1);
+            GanarPuntos();
+        } else {
+            obstaculos[i].posX -= velEscenario * deltaTime * gameVel;
+            obstaculos[i].style.left = obstaculos[i].posX + "px";
+        }
+    }
+}
+
+function GanarPuntos() {
+    score++;
+    textoScore.innerText = score;
+    
+    if (score % 5 === 0) gameVel += 0.1;
+
+    let fase = score % 60;
+
+    if (fase >= 40) {
+        contenedor.style.background = "#2346af"; 
+        textoScore.style.color = "#ff81d0";     
+    } else if (fase >= 20) {
+        contenedor.style.background = "#e67e22"; 
+        textoScore.style.color = "#ffdecb";      
+    } else {
+        contenedor.style.background = "#69e2ff"; 
+        textoScore.style.color = "#841d00";      
+    }
+}
+
+function DetectarColision(){
+    for (var i = 0; i < obstaculos.length; i++){
+        if (IsCollision(michi, obstaculos[i], 20, 25, 10, 25)){
+            GameOver();
+        }
+    }
+}
+
+function IsCollision(a, b, paddingTop, paddingRight, paddingBottom, paddingLeft){
+    var aRect = a.getBoundingClientRect();
+    var bRect = b.getBoundingClientRect();
+    return !(
+        ((aRect.top + aRect.height - paddingBottom) < (bRect.top)) || 
+        (aRect.top + paddingTop > (bRect.top + bRect.height)) || 
+        ((aRect.left + aRect.width - paddingRight) < bRect.left) || 
+        (aRect.left + paddingLeft > (bRect.left + bRect.width))
+    );
+}
+
+function GameOver(){
+    parado = true;
+    michi.classList.remove("michi-corriendo");
+    michi.classList.add("michi-estrellado");
+    gameOver.style.display = "block";
+    
+    sndMusica.pause();
+    sndChoque.play();
+    setTimeout(() => { if(parado) sndGameOver.play(); }, 500);
+
+    GuardarScore(score);
+}
+
+function VerSeccion(id) {
+    document.querySelectorAll('.vistas-menu').forEach(v => v.style.display = 'none');
+    document.getElementById('juego').style.display = 'none';
+    document.getElementById(id).style.display = 'flex';
+    if(id === 'mejores-scores') MostrarScores();
+}
+
+function ElegirSkin(url, idImg) {
+    skinActual = url;
+    michi.style.backgroundImage = `url('${url}')`;
+    michiMenu.style.backgroundImage = `url('${url}')`; 
+    document.querySelectorAll('.skin-item').forEach(img => img.classList.remove('skin-seleccionada'));
+    document.getElementById(idImg).classList.add('skin-seleccionada');
+}
+
+function PrepararJuego() {
+    document.getElementById('menu-inicio').style.display = 'none';
+    document.getElementById('juego').style.display = 'block';
+    ReiniciarJuego(); 
+}
+
+function IrAlMenu() {
+    sndGameOver.pause();
+    sndGameOver.currentTime = 0;
+    VerSeccion('menu-inicio');
+    contenedor.style.background = "#69e2ff";
+    textoScore.style.color = "#841d00"; 
+}
+
+function ReiniciarJuego() {
+    parado = false;
+    score = 0;
+    gameVel = 1;
+    michiPosY = sueloY;
+    velY = 0;
+    saltando = false;
+    tiempoHastaObstaculo = 2;
+    textoScore.innerText = "0";
+    textoScore.style.color = "#841d00"; 
+    gameOver.style.display = "none";
+    michi.classList.remove("michi-estrellado");
+    michi.classList.add("michi-corriendo");
+    michi.style.backgroundImage = `url('${skinActual}')`;
+    contenedor.style.background = "#69e2ff";
+    
+    // Reiniciar Música
+    sndGameOver.pause();
+    sndGameOver.currentTime = 0;
+    sndMusica.currentTime = 0;
+    sndMusica.play();
+    
+    obstaculos.forEach(o => o.parentNode.removeChild(o));
+    obstaculos = [];
+}
+
+function GuardarScore(nuevoScore) {
+    mejoresScores.push(nuevoScore);
+    mejoresScores.sort((a, b) => b - a); 
+    mejoresScores = mejoresScores.slice(0, 5); 
+    localStorage.setItem("michiScores", JSON.stringify(mejoresScores));
+}
+
+function MostrarScores() {
+    const lista = document.getElementById("lista-scores");
+    if(mejoresScores.length === 0) {
+        lista.innerHTML = "Aún no hay récords";
+    } else {
+        lista.innerHTML = mejoresScores.map((s, i) => `<p>${i+1}. ${s} pts</p>`).join("");
+    }
+}
+
+function GenerarNubeAutomatica() {
+    let dest = "";
+    if (document.getElementById("menu-inicio").style.display !== "none") dest = "#menu-inicio";
+    else if (document.getElementById("juego").style.display !== "none" && !parado) dest = "#juego";
+    
+    if (dest !== "") {
+        const cont = document.querySelector(dest + " .nubes-contenedor");
+        if(cont) {
+            const nube = document.createElement("div");
+            nube.className = "nube";
+            nube.style.top = Math.random() * 100 + "px";
+            const dur = Math.random() * 5 + 8;
+            nube.style.animationDuration = dur + "s";
+            nube.style.opacity = Math.random() * 0.5 + 0.3;
+            cont.appendChild(nube);
+            setTimeout(() => nube.remove(), dur * 1000);
+        }
+    }
+}
+</script>
+</body>
+</html>
