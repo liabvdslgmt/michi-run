@@ -1,4 +1,4 @@
-const CACHE_NAME = 'michi-run-v1';
+const CACHE_NAME = 'michi-run-v2';
 const ASSETS = [
   './',
   './index.html',
